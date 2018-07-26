@@ -17,28 +17,25 @@ public class Server {
 		serverSocket = new ServerSocket(portNumber);
 		userList = new ArrayList<Socket>();
 		BufferedReader br;
-	
+		
 		while(running) {
-			for(Socket socket : userList) {
+			
+			userList.add(serverSocket.accept());
+			/*for(Socket socket : userList) {
 				if(socket.getInputStream().available() > 0) {
 					String message = "";
 					String line;
-					
 					// Add protocol reading like whos message from
 					// time sent, and formatting etc
-					
 					br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 					while((line = br.readLine()) != null) {
 						message += line;
 					}
-					
-					
 					if(message.length() > 0) {
 						sendMessage(message);
 					}
-					
 				}
-			}
+			}*/
 		}
 	}
 	

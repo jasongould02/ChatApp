@@ -35,17 +35,18 @@ public class Worker implements Runnable {
 		try {
 			o = new PrintWriter(clientSocket.getOutputStream());
 			i = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
 			// Once this loop ends the entire socket gets closed
-			while((input = i.readLine()) != null) { // After reading the first line, read the rest of the input
-				// Check for message type (like checking if HTTP GET or whatever
+			while((input = i.readLine()) != null) { 
 				
-				if(input.startsWith("MESSAGE:")) {
+				if(input.contains("MESSAGE:")) {
+					String message = input.substring(8);
+					
+					if(!message.endsWith("\n")) message += "\n";
+					
+					o.println(clientSocket.getInetAddress().getHostAddress() + ":" + message);
+					System.out.println(clientSocket.getInetAddress().getHostAddress() + ":" + message);
 				}
 				
-				if(input.startsWith("CLOSESOCKET")) {
-					break;
-				}
 			}
 			
 			o.close();
@@ -70,6 +71,10 @@ public class Worker implements Runnable {
 		// Parse the input and respond
 		
 	}	
+	
+	public Socket getSocket() {
+		return clientSocket;
+	}
 	
 	public synchronized void start() {
 		running = true;

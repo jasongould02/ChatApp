@@ -2,25 +2,28 @@ package jcg.java.chat.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class Server {
+public class Server{
 
 	private ServerSocket serverSocket;
-	private ArrayList<Socket> userList;
-	private boolean running = false;
+	private ArrayList<Worker> userList;
 	
 	public Server(int portNumber) throws IOException {
-		serverSocket = new ServerSocket(portNumber);
-		userList = new ArrayList<Socket>();
+		serverSocket = new ServerSocket(portNumber, 100);
+		userList = new ArrayList<Worker>();
 		BufferedReader br;
 		
-		while(running) {
+		while(true) {
 			
-			userList.add(serverSocket.accept());
+			Worker worker = new Worker(serverSocket.accept());
+			worker.start();
+			userList.add(worker);
+			System.out.println("Connection made.");
+			
+			//userList.add(serverSocket.accept());
 			/*for(Socket socket : userList) {
 				if(socket.getInputStream().available() > 0) {
 					String message = "";
@@ -44,7 +47,11 @@ public class Server {
 	}
 	
 	public static void main(String[] args) {
-		
+		try {
+			Server server = new Server(80);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	

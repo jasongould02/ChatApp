@@ -13,13 +13,14 @@ import java.net.Socket;
  * 
  * */
 
-
+@Deprecated
 public class Worker implements Runnable {
 	
 	private Thread thread;
 	private String remoteIP;
 	private boolean running = false;
 	
+	private Server server;
 	private Socket clientSocket;
 	
 	public Worker(Socket cs) {

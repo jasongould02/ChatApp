@@ -23,6 +23,7 @@ public class Server {
 		BufferedReader br;
 		try {
 			while(true) {
+				System.out.println("waiting conn");
 				Worker worker = new Worker(serverSocket.accept());
 				worker.start();
 				userList.add(worker);
@@ -34,8 +35,16 @@ public class Server {
 		}
 	}
 	
-	public void sendMessage(String message) {
-		
+	public void sendMessage(String message) throws IOException {
+		for(Worker w : userList) {
+			if(w.o == null) {
+				w.o = new PrintWriter(w.clientSocket.getOutputStream());
+			}
+			System.out.println("messagesending:" + message);
+			//w.o.println(message);
+			w.o.write(message);
+			w.o.flush();
+		}
 	}
 	
 	public ArrayList<Worker> getWorkerList() {
@@ -50,35 +59,50 @@ public class Server {
 
 		private Socket clientSocket;
 		
-		PrintWriter o;
-		BufferedReader i;
+		private PrintWriter o;
+		private BufferedReader i;
 
 		public Worker(Socket cs) {
 			this.clientSocket = cs;
 			remoteIP = clientSocket.getRemoteSocketAddress().toString().replaceAll("/", " ").trim();
-		}
-
-		@Override
-		public void run() {
-			String input;
 			
 			try {
 				o = new PrintWriter(clientSocket.getOutputStream());
 				i = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+		}
+
+		@Override
+		public void run() {
+			System.out.println("Worker Started");
+			String input;
+			
+			try {
+				System.out.println("while");
 				// Once this loop ends the entire socket gets closed
 				while ((input = i.readLine()) != null) {
-
+					System.out.println("message:" + input);
+					sendMessage(input + "\n");
+					o.flush();
+					
+					/*System.out.println("looop");
 					if (input.contains("MESSAGE:")) {
 						String message = input.substring(8);
 
 						if (!message.endsWith("\n"))
 							message += "\n";
 
-						o.println(clientSocket.getInetAddress().getHostAddress() + ":" + message);
+						//o.println(clientSocket.getInetAddress().getHostAddress() + ":" + message);
+						message = "MESSAGE:" + message;
+						sendMessage(message);
 						System.out.println(clientSocket.getInetAddress().getHostAddress() + ":" + message);
-					}
+					}*/
 
 				}
+				System.out.println("closing worker stream");
 
 				o.close();
 				i.close();

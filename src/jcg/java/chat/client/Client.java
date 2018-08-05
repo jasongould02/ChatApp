@@ -12,6 +12,9 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JTextField;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -22,7 +25,7 @@ import jcg.java.chat.core.ui.SyntaxStyledPane;
 
 public class Client implements Runnable {
 
-	String username;
+	String username = "";
 	
 	Socket socket;
 	Thread thread = null;
@@ -31,6 +34,10 @@ public class Client implements Runnable {
 	JFrame window = null;
 	SyntaxStyledPane pane = null;
 	JTextField inputField = null; //  				/CONNECT 'IP address of server':'port'/'channel'
+	
+	JMenuBar menuBar = null;
+	JMenu fileMenu = null;
+	//JMenuItem menuItemFile = null;
 	
 	PrintWriter o = null;
 	BufferedReader i = null;
@@ -41,23 +48,60 @@ public class Client implements Runnable {
 		//running = true;
 	}
 	
+	private boolean makeConnection() throws NumberFormatException, IOException {
+		if (inputField != null) {
+			if (inputField.getText().trim().startsWith("/connect")) {
+				if (socket == null) {
+					socket = new Socket();
+				} else if (socket != null && socket.isClosed()) {
+					socket.close();
+					socket = null;
+					socket = new Socket();
+				}
+
+				String comm = inputField.getText().trim().substring(8).trim();
+				System.out.println("COMM" + comm);
+				String[] split = comm.split(":");
+
+				if(split.length == 2) {
+					socket.connect(new InetSocketAddress(split[0], Integer.parseInt(split[1])));
+				}
+			}
+		}
+
+		if (socket.isConnected()) {
+			System.out.println("connected!!!");
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	@Override
 	public void run() {
 		String input;
+		try {
+			while (!makeConnection()) {
+			}
+		} catch (NumberFormatException | IOException e2) {
+			e2.printStackTrace();
+		}
+		
  		try {
-			socket.connect(new InetSocketAddress("127.0.0.1", 80));
+			//socket.connect(new InetSocketAddress("127.0.0.1", 80)); // attempt auto connect as soon as client starts
 			o = new PrintWriter(socket.getOutputStream());
 			i = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
 		//while(running) {
+ 		System.out.println("reading");
 			try {
 				//System.out.println(running);
 				while((input = i.readLine()) != null) { 	// Once this loop ends the entire socket gets closed
-					//System.out.println("received:" + input);
+					System.out.println("received:" + input);
 					try {
-						pane.insertString(input);
+						pane.println(input);
 					} catch (BadLocationException e) {
 						e.printStackTrace();
 					}
@@ -100,8 +144,16 @@ public class Client implements Runnable {
 	}
 	
 	private void commandType(String message) {
+		if(message == null) {
+			// TODO: Should this throw an exception instead hmmm
+			return;
+		}
 		try {
-			if(message.trim().startsWith("/connect")) {
+			/*if(message.trim().startsWith("/connect")) {
+				if(socket.isConnected()) { // Disconnect if trying to connect to a new server when already connected to one
+					socket.close();
+					socket = null;
+				}
 				if(socket == null) {
 					socket = new Socket();
 				} else if(socket != null && socket.isClosed()) {
@@ -114,7 +166,8 @@ public class Client implements Runnable {
 				System.out.println("COMM" + comm);
 				String[] split = comm.split(":");
 				socket.connect(new InetSocketAddress(split[0], Integer.parseInt(split[1])));
-			}
+				System.out.println("address:" + socket.getInetAddress().getHostAddress());
+			}*/
 			
 			if(message.trim().equals("/dc")) {
 				if(socket == null) {
@@ -150,8 +203,10 @@ public class Client implements Runnable {
 				if(o == null) {
 					o = new PrintWriter(socket.getOutputStream());
 				}
-				if(username != null) { 
+				if(username != null) {
 					o.println(username.trim() + ": " + message.trim());
+				} else {
+					pane.println("You have not set your username yet.\n");
 				}
 				o.flush();
 				inputField.setText("");
@@ -160,7 +215,7 @@ public class Client implements Runnable {
 			
 			
 			return message;
-		} catch (IOException e) {
+		} catch (IOException | BadLocationException e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -202,8 +257,13 @@ public class Client implements Runnable {
 			public void keyPressed(KeyEvent e) {
 				if(e.getKeyCode() == KeyEvent.VK_ENTER) {
 					//System.out.println("enter pressed");
-					sendMessage();
-					inputField.setText("");
+					try {
+						makeConnection();
+						sendMessage();
+						inputField.setText("");
+					} catch (NumberFormatException | IOException e1) {
+						e1.printStackTrace();
+					}
 				}
 			}
 			@Override

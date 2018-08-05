@@ -40,7 +40,7 @@ public class SyntaxStyledPane {
 	}
 	
 	// Find the keys within the string
-	public void insertString(String text) throws BadLocationException {
+	public void println(String text) throws BadLocationException {
 		text += '\n';
 		pane.setCaretPosition(pane.getText().length() - 1);
 		String split[] = text.split(" ");
@@ -52,13 +52,21 @@ public class SyntaxStyledPane {
 			boolean printed = false;
 			for(Keyword k : keys) {
 				if(split[i].trim() == k.getKeyword().trim()) {	// Shouldn't have duplicate keywords so exit on the first occurrence
-					styledDocument.insertString(styledDocument.getLength(), split[i].trim() + " ", k.getSimpleAttributeSet());
+					if(i == split.length - 1) {
+						styledDocument.insertString(styledDocument.getLength(), split[i].trim() + "\n", k.getSimpleAttributeSet());
+					} else {
+						styledDocument.insertString(styledDocument.getLength(), split[i].trim() + " ", k.getSimpleAttributeSet());
+					}
 					printed = true;
 					break;
 				} 
 			}
 			if(printed == false) {
-				styledDocument.insertString(styledDocument.getLength(), split[i].trim() + " ", null);
+				if(i == split.length - 1) {
+					styledDocument.insertString(styledDocument.getLength(), split[i].trim() + "\n", null);
+				} else {
+					styledDocument.insertString(styledDocument.getLength(), split[i].trim() + " ", null);
+				}
 			}
 		}
 			

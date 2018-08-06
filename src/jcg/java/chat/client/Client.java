@@ -25,7 +25,7 @@ import jcg.java.chat.core.ui.SyntaxStyledPane;
 
 public class Client implements Runnable {
 
-	String username = "";
+	String username = null;
 	
 	Socket socket;
 	Thread thread = null;
@@ -43,8 +43,9 @@ public class Client implements Runnable {
 	BufferedReader i = null;
 	
 	public Client() {
-		initWindow();
 		socket = new Socket();
+		this.start();
+		initWindow();
 		//running = true;
 	}
 	
@@ -80,11 +81,8 @@ public class Client implements Runnable {
 	@Override
 	public void run() {
 		String input;
-		try {
-			while (!makeConnection()) {
-			}
-		} catch (NumberFormatException | IOException e2) {
-			e2.printStackTrace();
+		while (socket.isConnected() == false) {
+			System.out.println("waiting for the connection");
 		}
 		
  		try {
@@ -295,7 +293,7 @@ public class Client implements Runnable {
 	
 	public static void main(String[] args) {
 		Client c = new Client();
-		c.start();
+		//c.start();
 		
 	}
 	

@@ -19,37 +19,56 @@ public class Server {
 		runServer();
 	}
 	
-	private void runServer() {
-		BufferedReader br;
-		try {
-			while(true) {
-				System.out.println("waiting conn");
-				Worker worker = new Worker(serverSocket.accept());
-				worker.start();
-				userList.add(worker);
-				System.out.println("Connection made.");
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	private void runServer() throws IOException {
+		while (true) {
+			System.out.println("Waiting for connection...");
+			Worker worker = new Worker(serverSocket.accept());
+			worker.start();
+			userList.add(worker);
+			System.out.println("Connection made.");
+
+			removeClosedSockets();
 		}
 	}
 	
-	public void sendMessage(String message) throws IOException {
+	private void sendMessage(String message) throws IOException {
 		for(Worker w : userList) {
 			if(w.o == null) {
 				w.o = new PrintWriter(w.clientSocket.getOutputStream());
 			}
-			System.out.println("messagesending:" + message);
-			//w.o.println(message);
+			System.out.println("Relaying Message:" + message);
 			w.o.write(message);
 			w.o.flush();
 		}
 	}
 	
-	public ArrayList<Worker> getWorkerList() {
-		return userList;
+	
+	private void removeClosedSockets() {
+		ArrayList<Worker> removeQueue = new ArrayList<Worker>();
+		for(Worker w : userList) {
+			if(w.clientSocket.isClosed()) {
+				removeQueue.add(w);
+			}
+		}
+		userList.remove(removeQueue);
+		removeQueue = null;
 	}
+	
+	/*private ArrayList<Worker> getWorkerList() {
+		return userList;
+	}*/
+	
+	public static void main(String[] args) {
+		try {
+			Server server = new Server(80);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	
+	
 	
 	class Worker implements Runnable {
 
@@ -77,30 +96,15 @@ public class Server {
 
 		@Override
 		public void run() {
-			System.out.println("Worker Started");
+			System.out.println("Worker started.");
 			String input;
 			
 			try {
 				System.out.println("while");
-				// Once this loop ends the entire socket gets closed
-				while ((input = i.readLine()) != null) {
+				while ((input = i.readLine()) != null) { // Once this loop ends the entire socket gets closed
 					System.out.println("message:" + input);
 					sendMessage(input + "\n");
 					o.flush();
-					
-					/*System.out.println("looop");
-					if (input.contains("MESSAGE:")) {
-						String message = input.substring(8);
-
-						if (!message.endsWith("\n"))
-							message += "\n";
-
-						//o.println(clientSocket.getInetAddress().getHostAddress() + ":" + message);
-						message = "MESSAGE:" + message;
-						sendMessage(message);
-						System.out.println(clientSocket.getInetAddress().getHostAddress() + ":" + message);
-					}*/
-
 				}
 				System.out.println("closing worker stream");
 
@@ -111,8 +115,7 @@ public class Server {
 			}
 
 			try {
-				// Close socket
-				clientSocket.close();
+				clientSocket.close(); // Close socket
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -133,14 +136,6 @@ public class Server {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		}
-	}
-	
-	public static void main(String[] args) {
-		try {
-			Server server = new Server(80);
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 	

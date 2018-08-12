@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,22 +27,27 @@ import jcg.java.chat.core.ui.SyntaxStyledPane;
 
 public class Client implements Runnable {
 
-	String username = null;
-	
-	Socket socket;
-	Thread thread = null;
+	// Thread stuff
+	private Thread thread = null;
 	private boolean running = true;
 	
-	JFrame window = null;
-	SyntaxStyledPane pane = null;
-	JTextField inputField = null; //  				/CONNECT 'IP address of server':'port'/'channel'
+	// Socket stuff
+	private Socket socket;
+	private PrintWriter o = null;
+	private BufferedReader i = null;
 	
-	JMenuBar menuBar = null;
-	JMenu fileMenu = null;
+	// GUI stuff
+	private JFrame window = null;
+	private SyntaxStyledPane pane = null;
+	private JTextField inputField = null; //  				/CONNECT 'IP address of server':'port'/'channel'
+	private JMenuBar menuBar = null;
+	private JMenu fileMenu = null;
 	//JMenuItem menuItemFile = null;
 	
-	PrintWriter o = null;
-	BufferedReader i = null;
+	private boolean windowClosing = false;
+
+	// User stuff
+	private String nickname = null;
 	
 	public Client() {
 		socket = new Socket();
@@ -49,19 +56,48 @@ public class Client implements Runnable {
 		//running = true;
 	}
 	
+	private void disconnect() {
+		try {
+			socket.close();
+			socket = null;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private boolean connectToServer(String ipAddress, String portNumber) {
+		if(socket == null) {
+			socket = new Socket();
+		} else if(socket.isClosed()) {
+			socket = null;
+			socket = new Socket();
+		}
+		
+		try {
+			socket.connect(new InetSocketAddress(ipAddress, Integer.parseInt(portNumber)));
+		} catch (NumberFormatException | IOException e) {
+			e.printStackTrace();
+		}
+		
+		if(socket.isConnected()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	@Deprecated
 	private boolean makeConnection() throws NumberFormatException, IOException {
 		if (inputField != null) {
 			if (inputField.getText().trim().startsWith("/connect")) {
 				if (socket == null) {
 					socket = new Socket();
 				} else if (socket != null && socket.isClosed()) {
-					socket.close();
 					socket = null;
 					socket = new Socket();
 				}
-
 				String comm = inputField.getText().trim().substring(8).trim();
-				System.out.println("COMM" + comm);
+				System.out.println("Connected to server located at:" + comm);
 				String[] split = comm.split(":");
 
 				if(split.length == 2) {
@@ -69,9 +105,7 @@ public class Client implements Runnable {
 				}
 			}
 		}
-
 		if (socket.isConnected()) {
-			System.out.println("connected!!!");
 			return true;
 		} else {
 			return false;
@@ -80,110 +114,123 @@ public class Client implements Runnable {
 	
 	@Override
 	public void run() {
-		String input;
-		while (socket.isConnected() == false) {
-			System.out.println("waiting for the connection");
-		}
-		
- 		try {
-			//socket.connect(new InetSocketAddress("127.0.0.1", 80)); // attempt auto connect as soon as client starts
+ 		/*try {
+ 			String input;
+ 			while (socket.isConnected() == false) {} // Awaiting connection before allowing the run statement to commence
 			o = new PrintWriter(socket.getOutputStream());
 			i = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		//while(running) {
- 		System.out.println("reading");
-			try {
-				//System.out.println(running);
-				while((input = i.readLine()) != null) { 	// Once this loop ends the entire socket gets closed
-					System.out.println("received:" + input);
+	
+			while ((input = i.readLine()) != null) { // Once this loop ends the entire socket gets closed
+				System.out.println("Data received:" + input);
+				try {
+					pane.println(input);
+				} catch (BadLocationException e) {
+					e.printStackTrace();
+				}					
+			}
+			o.close();
+			i.close();
+			socket.close(); // Closing socket
+		} catch(IOException e) {
+			e.printStackTrace();
+		}*/
+		String input;
+		System.out.println("windowClosing == " + windowClosing);
+		while(windowClosing == false) { 
+			System.out.println("windowClosing == " + windowClosing);
+			//System.out.println("not closing");
+			while (socket.isConnected() == false) {if(socket.isConnected()) {break;}} // Awaiting connection before allowing the run statement to commence
+			
+	 		try {
+				//socket.connect(new InetSocketAddress("127.0.0.1", 80)); // attempt auto connect as soon as client starts
+	 			if(!socket.isClosed()) {
+	 				o = new PrintWriter(socket.getOutputStream());
+					i = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+	 			}
+				
+				while ((input = i.readLine()) != null) { // Once this loop ends the entire socket gets closed
+					System.out.println("Data received:" + input);
 					try {
 						pane.println(input);
 					} catch (BadLocationException e) {
 						e.printStackTrace();
-					}
-					/*if(input.contains("MESSAGE:")) {
-						String message = input.substring(8);
-						
-						if(!message.endsWith("\n")) message += "\n";
-						
-						//o.println(socket.getInetAddress().getHostAddress() + ":" + message);
-						//System.out.println(socket.getInetAddress().getHostAddress() + ":" + message);
-						
-						// Append new content to editor pane
-						try {
-							pane.insertString(message);
-						} catch (BadLocationException e) {
-							e.printStackTrace();
-						}
-						
-					}*/
-					
+					}					
 				}
-				System.out.println("closing");
 				
-				//o.close();
+				disconnect();
+				/*o.close();
 				i.close();
-			} catch(IOException e) {
-				e.printStackTrace();
-			}
-			
-			
-			try {
-				// Close socket
-				socket.close();
+				socket.close(); */ // Closing socket
 			} catch (IOException e) {
 				e.printStackTrace();
+			} finally {
+				try {
+					socket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
-			
-		//}
-		
+		}
+		//newRunMethod();
 	}
+	
+	/*private void newRunMethod() {
+		String input;
+		System.out.println("windowClosing == " + windowClosing);
+		while(windowClosing == false) { 
+			System.out.println("windowClosing == " + windowClosing);
+			//System.out.println("not closing");
+			while (socket.isConnected() == false) {if(socket.isConnected()) {break;}} // Awaiting connection before allowing the run statement to commence
+			
+	 		try {
+				//socket.connect(new InetSocketAddress("127.0.0.1", 80)); // attempt auto connect as soon as client starts
+	 			if(!socket.isClosed()) {
+	 				o = new PrintWriter(socket.getOutputStream());
+					i = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+	 			}
+				
+				while ((input = i.readLine()) != null) { // Once this loop ends the entire socket gets closed
+					System.out.println("Data received:" + input);
+					try {
+						pane.println(input);
+					} catch (BadLocationException e) {
+						e.printStackTrace();
+					}					
+				}
+				
+				o.close();
+				i.close();
+				socket.close(); // Closing socket
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					socket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}*/
 	
 	private void commandType(String message) {
 		if(message == null) {
 			// TODO: Should this throw an exception instead hmmm
 			return;
 		}
-		try {
-			/*if(message.trim().startsWith("/connect")) {
-				if(socket.isConnected()) { // Disconnect if trying to connect to a new server when already connected to one
-					socket.close();
-					socket = null;
-				}
-				if(socket == null) {
-					socket = new Socket();
-				} else if(socket != null && socket.isClosed()) {
-					socket.close();
-					socket = null;
-					socket = new Socket();
-				}
-				
-				String comm = message.trim().substring(8).trim();
-				System.out.println("COMM" + comm);
-				String[] split = comm.split(":");
-				socket.connect(new InetSocketAddress(split[0], Integer.parseInt(split[1])));
-				System.out.println("address:" + socket.getInetAddress().getHostAddress());
-			}*/
-			
-			if(message.trim().equals("/dc")) {
-				if(socket == null) {
-					System.out.println("cant disconnect... not connected to a server");
-				} else {
-					socket.close();
-					socket = null;
-				}
-				
+		if(message.trim().equals("/dc")) {
+			if(socket == null) {
+				System.out.println("Not currently connected to a server.");
+			} else {
+				disconnect();
+				/*socket.close();	socket = null;*/
 			}
-			
-			if(message.trim().startsWith("/username")) {
-				username = (message.substring(9)).trim();
-				System.out.println("username:" + username);
-			}
-				
-		}catch (IOException e) {
-			e.printStackTrace();
+		}
+		
+		if(message.trim().startsWith("/nickname")) {
+			nickname = (message.substring(9)).trim();
+			o.write("/nickname " + nickname.trim());
+			System.out.println("Setting nickname:" + nickname);
 		}
 	}
 
@@ -201,10 +248,10 @@ public class Client implements Runnable {
 				if(o == null) {
 					o = new PrintWriter(socket.getOutputStream());
 				}
-				if(username != null) {
-					o.println(username.trim() + ": " + message.trim());
+				if(nickname != null) {
+					o.println(nickname.trim() + ": " + message.trim());
 				} else {
-					pane.println("You have not set your username yet.\n");
+					pane.println("You have not set your nickname yet.\n");
 				}
 				o.flush();
 				inputField.setText("");
@@ -216,7 +263,21 @@ public class Client implements Runnable {
 		} catch (IOException | BadLocationException e) {
 			e.printStackTrace();
 		}
+		System.out.println("Failed to send message.");
 		return null;
+	}
+	
+	private void closeSocket() {
+		try {
+			if(!socket.isClosed()) {
+				socket.getInputStream().close();
+				socket.getOutputStream().close();
+				socket.close();
+			}
+			socket = null;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void initWindow() {
@@ -225,6 +286,29 @@ public class Client implements Runnable {
 		window.setTitle("ChatApp Client");
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.setResizable(false);
+		
+		window.addWindowListener(new WindowListener() {
+			@Override
+			public void windowActivated(WindowEvent e) {}
+			@Override
+			public void windowClosed(WindowEvent e) {
+				windowClosing = true;
+				closeSocket();
+			}
+			@Override
+			public void windowClosing(WindowEvent e) {
+				windowClosing = true;
+				closeSocket();
+			}
+			@Override
+			public void windowDeactivated(WindowEvent e) {}
+			@Override
+			public void windowDeiconified(WindowEvent e) {}
+			@Override
+			public void windowIconified(WindowEvent e) {}
+			@Override
+			public void windowOpened(WindowEvent e) {}
+		});
 		
 		window.setLocationRelativeTo(null);
 		
@@ -239,7 +323,6 @@ public class Client implements Runnable {
 		
 		Keyword hello = new Keyword("hello", keyWord);
 		pane.addKeyword(hello);
-		
 		
 		//pane.getJTextPane().setVisible(true);
 		window.add(pane.getJTextPane(), BorderLayout.CENTER);
@@ -256,9 +339,12 @@ public class Client implements Runnable {
 				if(e.getKeyCode() == KeyEvent.VK_ENTER) {
 					//System.out.println("enter pressed");
 					try {
-						makeConnection();
-						sendMessage();
-						inputField.setText("");
+						
+						if(inputField.getText().length() > 0 && inputField.getText() != " ") {
+							makeConnection();
+							sendMessage();
+							inputField.setText("");
+						}
 					} catch (NumberFormatException | IOException e1) {
 						e1.printStackTrace();
 					}
@@ -273,6 +359,17 @@ public class Client implements Runnable {
 		window.add(inputField, BorderLayout.SOUTH);
 		
 		window.setVisible(true);
+	}
+	
+	private void setupMenuBar() {
+		menuBar = new JMenuBar();
+		
+		fileMenu = new JMenu("File");
+		JMenuItem exitItem = new JMenuItem("Exit");
+		fileMenu.add(exitItem);
+		
+		menuBar.add(fileMenu);
+		window.add(menuBar);
 	}
 	
 	public synchronized void start() {
@@ -294,7 +391,6 @@ public class Client implements Runnable {
 	public static void main(String[] args) {
 		Client c = new Client();
 		//c.start();
-		
 	}
 	
 }

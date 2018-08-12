@@ -73,18 +73,19 @@ public class Server {
 	class Worker implements Runnable {
 
 		private Thread thread;
-		private String remoteIP;
 		private boolean running = false;
 
 		private Socket clientSocket;
-		
 		private PrintWriter o;
 		private BufferedReader i;
+		
+		// User info
+		private String address;
+		private String nickname;
 
 		public Worker(Socket cs) {
 			this.clientSocket = cs;
-			remoteIP = clientSocket.getRemoteSocketAddress().toString().replaceAll("/", " ").trim();
-			
+			address = clientSocket.getRemoteSocketAddress().toString().replaceAll("/", " ").trim();
 			try {
 				o = new PrintWriter(clientSocket.getOutputStream());
 				i = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -96,35 +97,35 @@ public class Server {
 
 		@Override
 		public void run() {
-			System.out.println("Worker started.");
-			String input;
-			
 			try {
-				System.out.println("while");
-				while ((input = i.readLine()) != null) { // Once this loop ends the entire socket gets closed
-					System.out.println("message:" + input);
-					sendMessage(input + "\n");
-					o.flush();
+				System.out.println("Worker started.");
+				String input;
+				if(i != null && clientSocket.isConnected()) {
+				
+					while ((input = i.readLine()) != null) { // Once this loop ends the entire socket gets closed
+						//System.out.println("message:" + input);
+						
+						if(input.startsWith("/nickname")) {
+							nickname = input.substring(9).trim();
+						}
+						
+						
+						sendMessage(input + "\n");
+						o.flush();
+					} //System.out.println("closing worker stream");
+	
+					o.close();
+					i.close();
+					clientSocket.close(); // Close socket
 				}
-				System.out.println("closing worker stream");
-
-				o.close();
-				i.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-
-			try {
-				clientSocket.close(); // Close socket
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
 		}
 
 		public synchronized void start() {
 			running = true;
-			thread = new Thread(this, "Worker/" + remoteIP);
+			thread = new Thread(this, "Worker/" + address);
 			thread.setPriority(Thread.NORM_PRIORITY);
 			thread.start();
 		}

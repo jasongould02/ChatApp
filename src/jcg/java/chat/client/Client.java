@@ -2,6 +2,7 @@ package jcg.java.chat.client;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
@@ -12,18 +13,24 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.rmi.activation.ActivationSystem;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-import jcg.java.chat.core.ui.Keyword;
-import jcg.java.chat.core.ui.SyntaxStyledPane;
+import jcg.java.chat.client.ui.ConnectionDialog;
+import jcg.java.chat.client.ui.Keyword;
+import jcg.java.chat.client.ui.SyntaxStyledPane;
 
 public class Client implements Runnable {
 
@@ -41,18 +48,41 @@ public class Client implements Runnable {
 	private SyntaxStyledPane pane = null;
 	private JTextField inputField = null; //  				/CONNECT 'IP address of server':'port'/'channel'
 	private JMenuBar menuBar = null;
+	
 	private JMenu fileMenu = null;
-	//JMenuItem menuItemFile = null;
+	private JMenuItem file_connectServer = null;
+	private JMenuItem file_disconnectServer = null;
+	//private JMenuItem 
 	
 	private boolean windowClosing = false;
 
 	// User stuff
 	private String nickname = null;
 	
+	
+	private JMenuBar createMenuBar() {
+		menuBar = new JMenuBar();
+		
+		fileMenu = new JMenu("File");
+		file_connectServer = new JMenuItem("Connect");
+		file_connectServer.setAction(actionConnectServer);
+		file_connectServer.setText(file_connectServer.getName());
+		fileMenu.add(file_connectServer);
+		
+		file_disconnectServer = new JMenuItem("Disconnect");
+		file_disconnectServer.setAction(actionDisconnectServer);
+		file_disconnectServer.setText(file_disconnectServer.getName());
+		fileMenu.add(file_disconnectServer);
+		
+		menuBar.add(fileMenu);
+		return menuBar;
+	}
+	
 	public Client() {
 		socket = new Socket();
 		this.start();
 		initWindow();
+		ConnectionDialog d = new ConnectionDialog(window);
 		//running = true;
 	}
 	
@@ -65,7 +95,7 @@ public class Client implements Runnable {
 		}
 	}
 	
-	private boolean connectToServer(String ipAddress, String portNumber) {
+	private boolean connectToServer(Socket socket, String ipAddress, String portNumber) {
 		if(socket == null) {
 			socket = new Socket();
 		} else if(socket.isClosed()) {
@@ -218,7 +248,7 @@ public class Client implements Runnable {
 			// TODO: Should this throw an exception instead hmmm
 			return;
 		}
-		if(message.trim().equals("/dc")) {
+		if(message.trim().equals("/disconnect")) {
 			if(socket == null) {
 				System.out.println("Not currently connected to a server.");
 			} else {
@@ -235,7 +265,27 @@ public class Client implements Runnable {
 	}
 
 	/**
-	 * Returns null if fails
+	 * Wraps the {@link SyntaxStyledPane#println(String)}
+	 * This is for writing messages to the client privately
+	 * 
+	 * Useful for having commands like '/help'
+	 * 
+	 * @returns the string being printed or null if it fails
+	 */
+	private String printMessage(String text) {
+		try {
+			pane.println(text);
+			return text;
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	/**
+	 * Sends message to server which will be received then to be sent 
+	 * 
+	 * @returns null if fails
 	 */
 	private String sendMessage() {
 		try {
@@ -256,9 +306,6 @@ public class Client implements Runnable {
 				o.flush();
 				inputField.setText("");
 			}
-			
-			
-			
 			return message;
 		} catch (IOException | BadLocationException e) {
 			e.printStackTrace();
@@ -267,7 +314,8 @@ public class Client implements Runnable {
 		return null;
 	}
 	
-	private void closeSocket() {
+	
+	private void closeSocket(Socket socket) {
 		try {
 			if(!socket.isClosed()) {
 				socket.getInputStream().close();
@@ -293,12 +341,12 @@ public class Client implements Runnable {
 			@Override
 			public void windowClosed(WindowEvent e) {
 				windowClosing = true;
-				closeSocket();
+				closeSocket(socket);
 			}
 			@Override
 			public void windowClosing(WindowEvent e) {
 				windowClosing = true;
-				closeSocket();
+				closeSocket(socket);
 			}
 			@Override
 			public void windowDeactivated(WindowEvent e) {}
@@ -321,7 +369,7 @@ public class Client implements Runnable {
 		StyleConstants.setBackground(keyWord, Color.YELLOW);
 		StyleConstants.setBold(keyWord, true);
 		
-		Keyword hello = new Keyword("hello", keyWord);
+		Keyword hello = new Keyword(("hello").trim(), keyWord);
 		pane.addKeyword(hello);
 		
 		//pane.getJTextPane().setVisible(true);
@@ -358,6 +406,9 @@ public class Client implements Runnable {
 		inputField.setVisible(true);
 		window.add(inputField, BorderLayout.SOUTH);
 		
+		window.setJMenuBar(createMenuBar());
+		
+		
 		window.setVisible(true);
 	}
 	
@@ -389,8 +440,27 @@ public class Client implements Runnable {
 	}
 	
 	public static void main(String[] args) {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+				| UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+		}
 		Client c = new Client();
 		//c.start();
 	}
 	
+	public Action actionConnectServer = new AbstractAction() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			connectToServer(socket, "127.0.0.1", "80");
+		}
+	};
+	public Action actionDisconnectServer = new AbstractAction() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			disconnect();
+		}
+	};
+
 }

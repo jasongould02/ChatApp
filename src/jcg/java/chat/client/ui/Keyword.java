@@ -1,4 +1,4 @@
-package jcg.java.chat.core.ui;
+package jcg.java.chat.client.ui;
 
 import javax.swing.text.SimpleAttributeSet;
 

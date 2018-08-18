@@ -13,7 +13,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.rmi.activation.ActivationSystem;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -21,6 +20,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -28,7 +28,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-import jcg.java.chat.client.ui.ConnectionDialog;
 import jcg.java.chat.client.ui.Keyword;
 import jcg.java.chat.client.ui.SyntaxStyledPane;
 
@@ -65,13 +64,13 @@ public class Client implements Runnable {
 		
 		fileMenu = new JMenu("File");
 		file_connectServer = new JMenuItem("Connect");
-		file_connectServer.setAction(actionConnectServer);
-		file_connectServer.setText(file_connectServer.getName());
+		file_connectServer.setAction(actionConnectServerDialog);
+		file_connectServer.setText(file_connectServer.getText());
 		fileMenu.add(file_connectServer);
 		
 		file_disconnectServer = new JMenuItem("Disconnect");
 		file_disconnectServer.setAction(actionDisconnectServer);
-		file_disconnectServer.setText(file_disconnectServer.getName());
+		file_disconnectServer.setText(file_disconnectServer.getText());
 		fileMenu.add(file_disconnectServer);
 		
 		menuBar.add(fileMenu);
@@ -82,7 +81,6 @@ public class Client implements Runnable {
 		socket = new Socket();
 		this.start();
 		initWindow();
-		ConnectionDialog d = new ConnectionDialog(window);
 		//running = true;
 	}
 	
@@ -95,7 +93,7 @@ public class Client implements Runnable {
 		}
 	}
 	
-	private boolean connectToServer(Socket socket, String ipAddress, String portNumber) {
+	private boolean connectToServer(String ipAddress, String portNumber) {
 		if(socket == null) {
 			socket = new Socket();
 		} else if(socket.isClosed()) {
@@ -450,13 +448,25 @@ public class Client implements Runnable {
 		//c.start();
 	}
 	
-	public Action actionConnectServer = new AbstractAction() {
+	private String showConnectDialog() {
+		String IP = JOptionPane.showInputDialog("Enter address:");
+		return IP;
+	}
+	
+	public Action actionConnectServerDialog = new AbstractAction("Connect") {
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			connectToServer(socket, "127.0.0.1", "80");
+			String input = showConnectDialog();
+			if(input != null) {
+				String[] ip = input.split(":");
+				connectToServer(ip[0].trim(), ip[1].trim());
+			}
+			//dialog = new ConnectionDialog(window, actionAcceptConnectionDialog, actionCancelConnectionDialog);
+			//connectToServer(socket, "127.0.0.1", "80");
 		}
 	};
-	public Action actionDisconnectServer = new AbstractAction() {
+	
+	public Action actionDisconnectServer = new AbstractAction("Disconnect") {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			disconnect();

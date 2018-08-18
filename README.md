@@ -8,3 +8,12 @@ Basic instant messaging application made in Java.
 2. Connect to the server's IP at the port used when creating server.
 3. Open client and type: /connect 'ip-address':'port-number'
 4. Type away!
+
+
+COMMANDS
+
+/connect 'ip-address':'port-number'
+/disconnect
+/nickname 'newNickname'
+
+

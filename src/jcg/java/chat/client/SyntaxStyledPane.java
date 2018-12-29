@@ -1,4 +1,4 @@
-package jcg.java.chat.client.ui;
+package jcg.java.chat.client;
 
 import java.util.ArrayList;
 

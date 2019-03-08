@@ -13,7 +13,9 @@ Basic instant messaging application made in Java.
 COMMANDS
 
 /connect 'ip-address':'port-number'
+
 /disconnect
+
 /nickname 'newNickname'
 
 

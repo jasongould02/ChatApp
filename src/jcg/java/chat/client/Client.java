@@ -28,9 +28,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-import jcg.java.chat.client.ui.Keyword;
-import jcg.java.chat.client.ui.SyntaxStyledPane;
-
 public class Client implements Runnable {
 
 	// Thread stuff
@@ -58,6 +55,21 @@ public class Client implements Runnable {
 	// User stuff
 	private String nickname = null;
 	
+	public boolean isConnected() {
+		if(socket == null || socket.isClosed()) {
+			return false;
+		} else {
+			return socket.isConnected();
+		}
+	}
+	
+	public String getServerIP() {
+		return socket.getInetAddress().getHostAddress();
+	}
+	
+	public String getNickname() {
+		return nickname;
+	}
 	
 	private JMenuBar createMenuBar() {
 		menuBar = new JMenuBar();
@@ -125,7 +137,11 @@ public class Client implements Runnable {
 					socket = new Socket();
 				}
 				String comm = inputField.getText().trim().substring(8).trim();
-				System.out.println("Connected to server located at:" + comm);
+				if(socket.isConnected()) {
+					System.out.println("Connected to server located at:" + comm);
+				} else {
+					System.out.println("Failed to connect to server, either the server at the given address is offline, or does not exist.");
+				}
 				String[] split = comm.split(":");
 
 				if(split.length == 2) {
@@ -176,7 +192,7 @@ public class Client implements Runnable {
 					i = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 	 			}
 				
-				while ((input = i.readLine()) != null) { // Once this loop ends the entire socket gets closed
+				while ((input = i.readLine()) != null || socket.isClosed()) { // Once this loop ends the entire socket gets closed
 					System.out.println("Data received:" + input);
 					try {
 						pane.println(input);
@@ -186,9 +202,6 @@ public class Client implements Runnable {
 				}
 				
 				disconnect();
-				/*o.close();
-				i.close();
-				socket.close(); */ // Closing socket
 			} catch (IOException e) {
 				e.printStackTrace();
 			} finally {
@@ -199,54 +212,14 @@ public class Client implements Runnable {
 				}
 			}
 		}
-		//newRunMethod();
 	}
-	
-	/*private void newRunMethod() {
-		String input;
-		System.out.println("windowClosing == " + windowClosing);
-		while(windowClosing == false) { 
-			System.out.println("windowClosing == " + windowClosing);
-			//System.out.println("not closing");
-			while (socket.isConnected() == false) {if(socket.isConnected()) {break;}} // Awaiting connection before allowing the run statement to commence
-			
-	 		try {
-				//socket.connect(new InetSocketAddress("127.0.0.1", 80)); // attempt auto connect as soon as client starts
-	 			if(!socket.isClosed()) {
-	 				o = new PrintWriter(socket.getOutputStream());
-					i = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-	 			}
-				
-				while ((input = i.readLine()) != null) { // Once this loop ends the entire socket gets closed
-					System.out.println("Data received:" + input);
-					try {
-						pane.println(input);
-					} catch (BadLocationException e) {
-						e.printStackTrace();
-					}					
-				}
-				
-				o.close();
-				i.close();
-				socket.close(); // Closing socket
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
-				try {
-					socket.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-	}*/
 	
 	private void commandType(String message) {
 		if(message == null) {
 			// TODO: Should this throw an exception instead hmmm
 			return;
 		}
-		if(message.trim().equals("/disconnect")) {
+		if(message.trim().equals("/disconnect") || message.trim().equals("/dc")) {
 			if(socket == null) {
 				System.out.println("Not currently connected to a server.");
 			} else {
@@ -257,9 +230,14 @@ public class Client implements Runnable {
 		
 		if(message.trim().startsWith("/nickname")) {
 			nickname = (message.substring(9)).trim();
-			o.write("/nickname " + nickname.trim());
+			//o.write("/nickname " + nickname.trim());
 			System.out.println("Setting nickname:" + nickname);
 		}
+	}
+	
+	private void updateNickname(String newNickname) {
+		nickname = newNickname;
+		System.out.println("Setting nickname: " + nickname);
 	}
 
 	/**
@@ -388,6 +366,11 @@ public class Client implements Runnable {
 						
 						if(inputField.getText().length() > 0 && inputField.getText() != " ") {
 							makeConnection();
+							//connectToServer(ipAddress, portNumber)ct
+							
+							// if msg is not command send
+							// else send coded message to server
+							// and server send coded message back
 							sendMessage();
 							inputField.setText("");
 						}
@@ -408,17 +391,6 @@ public class Client implements Runnable {
 		
 		
 		window.setVisible(true);
-	}
-	
-	private void setupMenuBar() {
-		menuBar = new JMenuBar();
-		
-		fileMenu = new JMenu("File");
-		JMenuItem exitItem = new JMenuItem("Exit");
-		fileMenu.add(exitItem);
-		
-		menuBar.add(fileMenu);
-		window.add(menuBar);
 	}
 	
 	public synchronized void start() {

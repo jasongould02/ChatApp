@@ -96,27 +96,6 @@ public class Client implements Runnable {
 		//running = true;
 	}
 	
-	/*private void disconnect() {
-		try {
-			socket.close();
-			socket = null;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	private void closeSocket(Socket socket) {
-		try {
-			if(!socket.isClosed()) {
-				socket.getInputStream().close();
-				socket.getOutputStream().close();
-				socket.close();
-			}
-			socket = null;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}*/
-	
 	private void disconnect() {
 		if(socket != null) {
 			try {
@@ -144,6 +123,7 @@ public class Client implements Runnable {
 			socket.connect(new InetSocketAddress(ipAddress, Integer.parseInt(portNumber)));
 		} catch (NumberFormatException | IOException e) {
 			e.printStackTrace();
+			System.out.println("Failed to connect.");
 		}
 		
 		if(socket.isConnected()) {
@@ -153,7 +133,7 @@ public class Client implements Runnable {
 		}
 	}
 	
-	@Deprecated
+/*	@Deprecated
 	private boolean makeConnection() throws NumberFormatException, IOException {
 		if (inputField != null) {
 			if (inputField.getText().trim().startsWith("/connect")) {
@@ -163,7 +143,7 @@ public class Client implements Runnable {
 					socket = null;
 					socket = new Socket();
 				}
-				String comm = inputField.getText().trim().substring(8).trim();
+				String comm = inputField.getText().trim().substring(8).trim(); // grabs the IP address and port seperated by colon // FORMAT = IP:Port
 				if(socket.isConnected()) {
 					System.out.println("Connected to server located at:" + comm);
 				} else {
@@ -182,7 +162,7 @@ public class Client implements Runnable {
 			return false;
 		}
 	}
-	
+	*/
 	@Override
 	public void run() {
  		/*try {
@@ -260,6 +240,25 @@ public class Client implements Runnable {
 			//o.write("/nickname " + nickname.trim());
 			System.out.println("Setting nickname:" + nickname);
 		}
+		
+		if (message.trim().startsWith("/connect")) {
+			if (socket == null) {
+				socket = new Socket();
+			} else if (socket != null && socket.isClosed()) {
+				socket = null;
+				socket = new Socket();
+			}
+			// grabs the IP address and port seperated by colon
+			// FORMAT = IP:Port
+			String comm = message.trim().substring(8).trim();
+			String[] split = comm.split(":");
+			if(split.length != 2) {
+				System.out.println("Expected size of 2 received:" + split.length);
+				System.out.println("The input of /connect command is not what is expected, error.");
+			}
+			connectToServer(split[0].trim(), split[1].trim());
+		}
+		
 	}
 	
 	private void updateNickname(String newNickname) {
@@ -316,9 +315,6 @@ public class Client implements Runnable {
 		System.out.println("Failed to send message.");
 		return null;
 	}
-	
-	
-
 	
 	private void initWindow() {
 		window = new JFrame();
@@ -383,7 +379,7 @@ public class Client implements Runnable {
 					try {
 						
 						if(inputField.getText().length() > 0 && inputField.getText() != " ") {
-							makeConnection();
+							//makeConnection();
 							//connectToServer(ipAddress, portNumber)ct
 							
 							// if msg is not command send
@@ -392,7 +388,8 @@ public class Client implements Runnable {
 							sendMessage();
 							inputField.setText("");
 						}
-					} catch (NumberFormatException | IOException e1) {
+					//} catch (NumberFormatException | IOException e1) {
+					} catch (NumberFormatException e1) {
 						e1.printStackTrace();
 					}
 				}

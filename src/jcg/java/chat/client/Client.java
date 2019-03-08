@@ -96,12 +96,39 @@ public class Client implements Runnable {
 		//running = true;
 	}
 	
-	private void disconnect() {
+	/*private void disconnect() {
 		try {
 			socket.close();
 			socket = null;
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+	private void closeSocket(Socket socket) {
+		try {
+			if(!socket.isClosed()) {
+				socket.getInputStream().close();
+				socket.getOutputStream().close();
+				socket.close();
+			}
+			socket = null;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}*/
+	
+	private void disconnect() {
+		if(socket != null) {
+			try {
+				socket.close();
+				socket = null;
+			} catch(NullPointerException | IOException e) {
+				e.printStackTrace();
+				System.out.println("Failed to disconnect. Error disconnecting.");
+			}
+		} else {
+			System.out.println("Failed to disconnect. Null socket.");
+			socket = null;
 		}
 	}
 	
@@ -291,18 +318,7 @@ public class Client implements Runnable {
 	}
 	
 	
-	private void closeSocket(Socket socket) {
-		try {
-			if(!socket.isClosed()) {
-				socket.getInputStream().close();
-				socket.getOutputStream().close();
-				socket.close();
-			}
-			socket = null;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+
 	
 	private void initWindow() {
 		window = new JFrame();
@@ -317,12 +333,14 @@ public class Client implements Runnable {
 			@Override
 			public void windowClosed(WindowEvent e) {
 				windowClosing = true;
-				closeSocket(socket);
+				//closeSocket(socket);
+				disconnect();
 			}
 			@Override
 			public void windowClosing(WindowEvent e) {
 				windowClosing = true;
-				closeSocket(socket);
+				//closeSocket(socket);
+				disconnect();
 			}
 			@Override
 			public void windowDeactivated(WindowEvent e) {}

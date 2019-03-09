@@ -68,8 +68,6 @@ public class Server {
 	
 	
 	
-	
-	
 	class Worker implements Runnable {
 
 		private Thread thread;
@@ -78,14 +76,9 @@ public class Server {
 		private Socket clientSocket;
 		private PrintWriter o;
 		private BufferedReader i;
-		
-		// User info
-		private String address;
-		private String nickname;
 
 		public Worker(Socket cs) {
 			this.clientSocket = cs;
-			address = clientSocket.getRemoteSocketAddress().toString().replaceAll("/", " ").trim();
 			try {
 				o = new PrintWriter(clientSocket.getOutputStream());
 				i = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -94,7 +87,21 @@ public class Server {
 			}
 			
 		}
-
+		
+		/**
+		 * Sends a message directly to the client
+		 * 
+		 * @param text - message to be sent
+		 */
+		private void sendClientMessage(String text) {
+			try {
+				o.write(text);
+				o.flush();
+			} catch(NullPointerException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		@Override
 		public void run() {
 			try {
@@ -103,14 +110,12 @@ public class Server {
 				if(i != null && clientSocket.isConnected()) {
 				
 					while ((input = i.readLine()) != null) { // Once this loop ends the entire socket gets closed
-						//System.out.println("message:" + input);
+						//System.out.println("["+getAddress() + "] [Message] >>" + input+"<< [/Message]");
 						
-						if(input.startsWith("/nickname")) {
-							nickname = input.substring(9).trim();
-						}
-						
-						
-						sendMessage(input + "\n");
+						// parse message,
+						// if privacy is private
+						System.out.println("sending message to all connected clients...");
+						sendMessage(input + "\n"); // sends message received to the entire server
 						o.flush();
 					} //System.out.println("closing worker stream");
 	
@@ -122,10 +127,14 @@ public class Server {
 				e.printStackTrace();
 			}
 		}
+		
+		private String getAddress() {
+			return clientSocket.getRemoteSocketAddress().toString().replaceAll("/", " ").trim();
+		}
 
 		public synchronized void start() {
 			running = true;
-			thread = new Thread(this, "Worker/" + address);
+			thread = new Thread(this, "Worker/" + getAddress());
 			thread.setPriority(Thread.NORM_PRIORITY);
 			thread.start();
 		}

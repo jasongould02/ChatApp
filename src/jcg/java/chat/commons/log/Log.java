@@ -21,25 +21,25 @@ public class Log {
 	};
 
 	// Prevents Log from being instantiated
-	private Log() {}
+	//private Log() {}
 	
 	public static void main(String[] args) {
 		System.out.println(filename);
 	}
 	
-	private static String filename = "debug-" + simpleDate() + ".txt";
+	private static String path = "debug/";
+	private static final String DATE = simpleDate();
+	private static String filename = "debug-" + DATE + ".txt";
 	private static String debugtext = "";
 	private static LogNameStyle NAME_TYPE = LogNameStyle.EXPANDED;
 	// If BUFFERED, it will wait until the buffer is full to flush the stream
 	// If UNBUFFERED, it will flush the stream as soon as it is written too
 	private static BufferType BUFFER_TYPE = BufferType.UNBUFFERED;
+	private static FileWriter writer;
 
 	public static void log(LogType logtype, String... msgs) {
 		String traceBackCaller_CLASS = new Exception().getStackTrace()[1].getClassName();
 		String traceBackCaller_METHOD = new Exception().getStackTrace()[1].getMethodName();
-		/*Date date = new Date();
-		SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy h:mm:ss a ");
-		String formattedDate = sdf.format(date);*/
 		for (String msg : msgs) {
 			if (logtype == LogType.ERROR) {
 				debugtext += "> [ERROR] :: [" + simpleDate() + "] :: " + msg + "\n";
@@ -59,16 +59,67 @@ public class Log {
 		} 
 	}
 	
+	public static void log(String... msgs) {
+		String traceBackCaller_CLASS = new Exception().getStackTrace()[1].getClassName();
+		for (String msg : msgs) {
+			debugtext += "> [INFO] ::  [" + simpleDate() + "] :: [" + traceBackCaller_CLASS.substring(traceBackCaller_CLASS.lastIndexOf('.')+1) + ".class] :: " + msg + "\n";
+		}
+		if(BUFFER_TYPE == BufferType.UNBUFFERED) { 
+			saveLog();
+		} 
+	}
+	
+	public static void error(String... msgs) {
+		String traceBackCaller_CLASS = new Exception().getStackTrace()[1].getClassName();
+		String traceBackCaller_METHOD = new Exception().getStackTrace()[1].getMethodName();
+		for (String msg : msgs) {
+			debugtext += "> [ERROR] :: [" + simpleDate() + "] :: " + msg + "\n";
+			debugtext += "\t> [ERROR] :: Error originated at <" + traceBackCaller_CLASS.toString() + "." + traceBackCaller_METHOD.toString() + "()> \n";
+		}
+		if(BUFFER_TYPE == BufferType.UNBUFFERED) { 
+			saveLog();
+		} 
+	}
+	
+	public static void warning(String... msgs) {
+		String traceBackCaller_CLASS = new Exception().getStackTrace()[1].getClassName();
+		String traceBackCaller_METHOD = new Exception().getStackTrace()[1].getMethodName();
+		for (String msg : msgs) {
+			debugtext += "> [WARNING] :: [" + simpleDate() + "] :: " + msg + "\n";
+			debugtext += "\t> [WARNING] :: Warning originated at <" + traceBackCaller_CLASS.toString() + "." +  traceBackCaller_METHOD.toString() + "()> \n";
+		}
+		if(BUFFER_TYPE == BufferType.UNBUFFERED) { 
+			saveLog();
+		} 
+	}
+	
+	public static void dump(String... msgs) {
+		String traceBackCaller_CLASS = new Exception().getStackTrace()[1].getClassName();
+		String traceBackCaller_METHOD = new Exception().getStackTrace()[1].getMethodName();
+		for (String msg : msgs) {
+			debugtext += "> [DUMP] :: [" + simpleDate() + "] :: " + msg + "\n";
+			debugtext += "\t> [DUMP] :: Dump originated at <" + traceBackCaller_CLASS.toString() + traceBackCaller_METHOD.toString() + "()> \n";
+		}
+		if(BUFFER_TYPE == BufferType.UNBUFFERED) { 
+			saveLog();
+		} 
+	}
+	
 	public static void clearLogBuffer() {
 		debugtext = null;
 	}
 	
 	public static void flushLogBuffer() {
 		try { 
-			FileWriter writer = new FileWriter("debug/" + filename);
+			if(!filename.endsWith(".txt")) {
+				filename += ".txt";
+			}
+			if(writer == null) {
+				writer = new FileWriter(path + filename);
+			}
 			writer.write(debugtext);
 			writer.flush();
-			writer.close();
+			//writer.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -76,24 +127,31 @@ public class Log {
 	
 	private static void saveLog() {
 		try {
-			File file = new File("debug");
-			file.mkdir();
-			FileWriter writer = new FileWriter("debug/" + filename);
+			File file = new File("debug/");
+			if(!file.exists()) {
+				file.mkdir();
+			}
+			if(!filename.endsWith(".txt")) {
+				filename += ".txt";
+			}
+			if(writer == null) {
+				writer = new FileWriter(path + filename);
+			}
 			writer.write(debugtext);
 			writer.flush();
-			writer.close();
+			//writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	public static String getLogPath() {
-		File file = new File(filename);
+		File file = new File(path + filename);
 		return file.getAbsolutePath();
 	}
 
 	public static File getLogFile() {
-		File file = new File(filename);
+		File file = new File(path + filename);
 		return file;
 	}
 	

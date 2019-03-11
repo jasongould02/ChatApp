@@ -28,6 +28,9 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
+import jcg.java.chat.commons.log.Log;
+import jcg.java.chat.commons.log.Log.LogType;
+
 public class Client implements Runnable {
 
 	// Thread stuff
@@ -55,20 +58,31 @@ public class Client implements Runnable {
 	// User stuff
 	private String nickname = null;
 	
-	public boolean isConnected() {
-		if(socket == null || socket.isClosed()) {
-			return false;
-		} else {
-			return socket.isConnected();
+	public static void main(String[] args) {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+				| UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
 		}
-	}
-	
-	public String getServerIP() {
-		return socket.getInetAddress().getHostAddress();
-	}
-	
-	public String getNickname() {
-		return nickname;
+		
+		/*
+		//Log a = new Log();
+
+		Log.log("sdfsdfsdf");
+		Log.log("sdfsdfsdf");
+		Log.log("sdfsdfsdf");
+		Log.log("sdfsdfsdf");
+		Log.log("sdfsdfsdf");
+		Log.error("error log");
+		Log.log(LogType.INFO, "asdasdasdasdasd");
+		Log.flushLogBuffer();
+		System.out.println("done");
+		*/
+		
+		//System.out.println(String.valueOf(LocalDateTime.now()));
+		Client c = new Client();
+		c.start();
 	}
 	
 	private JMenuBar createMenuBar() {
@@ -101,12 +115,14 @@ public class Client implements Runnable {
 			try {
 				socket.close();
 				socket = null;
-			} catch(NullPointerException | IOException e) {
+			} catch(IOException e) {
 				e.printStackTrace();
-				System.out.println("Failed to disconnect. Error disconnecting.");
+				//System.out.println("Failed to disconnect. Error disconnecting.");
+				Log.error("I/O Exception, failed to disconnect.");
 			}
 		} else {
-			System.out.println("Failed to disconnect. Null socket.");
+			//System.out.println("Failed to disconnect. Null socket.");
+			Log.error("Null socket, failed to disconnect.");
 			socket = null;
 		}
 	}
@@ -163,28 +179,9 @@ public class Client implements Runnable {
 		}
 	}
 	*/
+	
 	@Override
 	public void run() {
- 		/*try {
- 			String input;
- 			while (socket.isConnected() == false) {} // Awaiting connection before allowing the run statement to commence
-			o = new PrintWriter(socket.getOutputStream());
-			i = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-	
-			while ((input = i.readLine()) != null) { // Once this loop ends the entire socket gets closed
-				System.out.println("Data received:" + input);
-				try {
-					pane.println(input);
-				} catch (BadLocationException e) {
-					e.printStackTrace();
-				}					
-			}
-			o.close();
-			i.close();
-			socket.close(); // Closing socket
-		} catch(IOException e) {
-			e.printStackTrace();
-		}*/
 		String input;
 		System.out.println("windowClosing == " + windowClosing);
 		while(windowClosing == false) { 
@@ -202,7 +199,8 @@ public class Client implements Runnable {
 				while ((input = i.readLine()) != null || socket.isClosed()) { // Once this loop ends the entire socket gets closed
 					System.out.println("Data received:" + input);
 					try {
-						pane.println(input);
+						pane.println(input); // Prints message directly to the board
+						// TODO: Change so that it can parse a header similar to HTTP headers
 					} catch (BadLocationException e) {
 						e.printStackTrace();
 					}					
@@ -242,6 +240,11 @@ public class Client implements Runnable {
 		}
 		
 		if (message.trim().startsWith("/connect")) {
+			// If no nickname set, no connection
+			if(nickname.trim().length() == 0 || nickname == null) {
+				System.out.println("No nickname.");
+				return;
+			}
 			if (socket == null) {
 				socket = new Socket();
 			} else if (socket != null && socket.isClosed()) {
@@ -274,7 +277,8 @@ public class Client implements Runnable {
 	 * 
 	 * @returns the string being printed or null if it fails
 	 */
-	private String printMessage(String text) {
+	@Deprecated
+	protected String printMessage(String text) {
 		try {
 			pane.println(text);
 			return text;
@@ -289,7 +293,7 @@ public class Client implements Runnable {
 	 * 
 	 * @returns null if fails
 	 */
-	private String sendMessage() {
+	protected String sendMessage() {
 		try {
 			String message = inputField.getText();
 			if(message.trim().startsWith("/")) { // Is command
@@ -378,7 +382,7 @@ public class Client implements Runnable {
 					//System.out.println("enter pressed");
 					try {
 						
-						if(inputField.getText().length() > 0 && inputField.getText() != " ") {
+						if(inputField.getText().trim().length() > 0) {
 							//makeConnection();
 							//connectToServer(ipAddress, portNumber)ct
 							
@@ -404,7 +408,6 @@ public class Client implements Runnable {
 		
 		window.setJMenuBar(createMenuBar());
 		
-		
 		window.setVisible(true);
 	}
 	
@@ -424,20 +427,25 @@ public class Client implements Runnable {
 		}
 	}
 	
-	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-				| UnsupportedLookAndFeelException e) {
-			e.printStackTrace();
-		}
-		Client c = new Client();
-		//c.start();
-	}
-	
 	private String showConnectDialog() {
 		String IP = JOptionPane.showInputDialog("Enter address:");
 		return IP;
+	}
+	
+	public boolean isConnected() {
+		if(socket == null || socket.isClosed()) {
+			return false;
+		} else {
+			return socket.isConnected();
+		}
+	}
+	
+	public String getServerIP() {
+		return socket.getInetAddress().getHostAddress();
+	}
+	
+	public String getNickname() {
+		return nickname;
 	}
 	
 	public Action actionConnectServerDialog = new AbstractAction("Connect") {

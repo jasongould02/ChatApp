@@ -149,37 +149,6 @@ public class Client implements Runnable {
 		}
 	}
 	
-/*	@Deprecated
-	private boolean makeConnection() throws NumberFormatException, IOException {
-		if (inputField != null) {
-			if (inputField.getText().trim().startsWith("/connect")) {
-				if (socket == null) {
-					socket = new Socket();
-				} else if (socket != null && socket.isClosed()) {
-					socket = null;
-					socket = new Socket();
-				}
-				String comm = inputField.getText().trim().substring(8).trim(); // grabs the IP address and port seperated by colon // FORMAT = IP:Port
-				if(socket.isConnected()) {
-					System.out.println("Connected to server located at:" + comm);
-				} else {
-					System.out.println("Failed to connect to server, either the server at the given address is offline, or does not exist.");
-				}
-				String[] split = comm.split(":");
-
-				if(split.length == 2) {
-					socket.connect(new InetSocketAddress(split[0], Integer.parseInt(split[1])));
-				}
-			}
-		}
-		if (socket.isConnected()) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-	*/
-	
 	@Override
 	public void run() {
 		String input;

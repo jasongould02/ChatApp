@@ -120,6 +120,25 @@ public class Connection {
 		return socket;
 	}
 	
+	public String getServerIP() {
+		if(getSocket() != null) {
+			if(getSocket().isConnected()) {
+				return socket.getInetAddress().getHostAddress();
+			} 
+		}
+		Log.warning("No connection made to a server, returning null.");
+		return null;
+	}
+	
+	public boolean isConnected() {
+		if(getSocket() != null) {
+			return getSocket().isConnected();
+		} else {
+			Log.warning("Socket is null. Connection#isConnected() returning false."); 
+			return false;
+		}
+	}
+	
 	/*private PrintWriter getPrintWriter() {
 		return writer;
 	}

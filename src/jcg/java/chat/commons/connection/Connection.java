@@ -25,6 +25,7 @@ public class Connection {
 	}
 	
 	public Connection(String ip, String port) {
+		socket = new Socket();
 		if(connect(ip, port)) {
 			Log.log("Connection made to: ["+ip+":"+port+"]");
 			try {
@@ -89,6 +90,12 @@ public class Connection {
 		}
 		
 		if(socket.isConnected()) {
+			try {
+				writer = new PrintWriter(socket.getOutputStream());
+				reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			return true;
 		} else {
 			return false;

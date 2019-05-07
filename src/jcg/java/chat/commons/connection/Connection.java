@@ -17,6 +17,13 @@ public class Connection {
 	private PrintWriter writer = null;
 	private BufferedReader reader = null;
 
+	/**
+	 * Creates a connection object, however nothing is initialized.
+	 */
+	public Connection() {
+		socket = new Socket();
+	}
+	
 	public Connection(String ip, String port) {
 		if(connect(ip, port)) {
 			Log.log("Connection made to: ["+ip+":"+port+"]");

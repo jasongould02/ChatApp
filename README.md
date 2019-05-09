@@ -2,15 +2,17 @@
 
 Basic instant messaging application made in Java.
 
-## How To Use
+##How to Use
+### Setup
 
-1. Launch the server.
-2. Connect to the server's IP at the port used when creating server.
-3. Open client and type: /connect 'ip-address':'port-number'
-4. Chat away!
+When compiling, create 2 Runnable JARs. 
 
+The first JAR should use jcg.java.chat.server.Server.java as the main class.
+The second JAR should use jcg.java.chat.client.Client.java as the main class.
 
-COMMANDS
+Run the Server JAR first. Then launch the Client JAR and use the commands below to connect the server. Use the servers IP address and port 80.
+
+### COMMANDS
 
 /connect 'ip-address':'port-number'
 

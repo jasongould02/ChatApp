@@ -1,4 +1,4 @@
-package jcg.java.chat.commons.connection;
+package jcg.java.chat.core.connection;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-import jcg.java.chat.commons.log.Log;
+import jcg.java.chat.core.log.Log;
 
 public class Connection {
 

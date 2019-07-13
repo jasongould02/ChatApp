@@ -3,7 +3,7 @@ package jcg.java.chat.test;
 import java.io.IOException;
 import java.net.ServerSocket;
 
-import jcg.java.chat.commons.connection.Connection;
+import jcg.java.chat.core.connection.Connection;
 
 public class ClientTest {
 

@@ -1,4 +1,4 @@
-package jcg.java.chat.commons;
+package jcg.java.chat.core;
 
 public enum MessagePrivacy {
 

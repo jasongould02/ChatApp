@@ -1,4 +1,4 @@
-package jcg.java.chat.commons.log;
+package jcg.java.chat.core.log;
 
 import java.io.File;
 import java.io.FileWriter;

@@ -28,8 +28,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-import jcg.java.chat.commons.log.Log;
-import jcg.java.chat.commons.log.Log.LogType;
+import jcg.java.chat.core.log.Log;
+import jcg.java.chat.core.log.Log.LogType;
 
 public class Client implements Runnable {
 

@@ -1,4 +1,4 @@
-package jcg.java.chat.client;
+package jcg.java.chat.core.client;
 
 import java.io.File;
 

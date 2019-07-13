@@ -1,4 +1,4 @@
-package jcg.java.chat.client;
+package jcg.java.chat.core.client;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -202,6 +202,7 @@ public class Client implements Runnable {
 			}
 		}
 		
+		// TODO: Send check with server if another user has that nickname
 		if(message.trim().startsWith("/nickname")) {
 			nickname = (message.substring(9)).trim();
 			//o.write("/nickname " + nickname.trim());

@@ -1,4 +1,4 @@
-package jcg.java.chat.server;
+package jcg.java.chat.core.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -66,10 +66,13 @@ public class Server {
 		}
 	}
 	
-	
-	
+	/**
+	 *	Worker thread designed to handle client socket
+	 */
 	class Worker implements Runnable {
 
+		// TODO: Update to handle more than one client per thread
+		
 		private Thread thread;
 		private boolean running = false;
 

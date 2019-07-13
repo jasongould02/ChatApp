@@ -1,4 +1,4 @@
-package jcg.java.chat.client;
+package jcg.java.chat.core.client;
 
 import java.util.ArrayList;
 
@@ -8,7 +8,6 @@ import javax.swing.text.StyledDocument;
 
 /**
  * Created on July 28 2018
- *
  */
 public class SyntaxStyledPane {
 
